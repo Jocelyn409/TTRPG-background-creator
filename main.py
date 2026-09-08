@@ -21,30 +21,49 @@
 #     ttk.Button(options_window, text="Test")
 
 
-# create_options_window()
 
-# Run app, call frames
-# if __name__ == "__main__":
-#     app = ttk.Window(title="Background Creator", theme="bootstrap-dark")
+
+# from screeninfo import get_monitors
+
+# # Get list of all connected monitors
+# monitors = get_monitors()
+
+# # Make sure you actually have a second monitor detected
+# if len(monitors) > 1:
+#     # monitors[0] is primary, monitors[1] is secondary
+#     target_monitor = monitors[1] 
+# else:
+#     target_monitor = monitors[0]
+
+# # Calculate center placement on the target monitor
+# win_w, win_h = 800, 600
+# x = target_monitor.x + (target_monitor.width - win_w) // 2
+# y = target_monitor.y + (target_monitor.height - win_h) // 2
+
+# root.geometry(f"{win_w}x{win_h}+{x}+{y}")
 
 
 
 import ttkbootstrap as ttk
 from ttkbootstrap.constants import *
-from tkinter import filedialog
+from tkinter import Image, filedialog
+from PIL import Image, ImageTk
 
 class MainApp(ttk.Window):
     def __init__(self):
         super().__init__(theme="bootstrap-dark")
         self.title("Background Creator")
         self.geometry("1400x800")
-        self.bind('<Escape>', self.toggle_fullscreen) # Binds escape key to fullscreen
+
         self.state = False
+        self.bind('<Escape>', self.toggle_fullscreen) # Binds escape key to fullscreen
+
         self.sub_window = None
         self.open_sub_window()
-        
-        ttk.Button(self, text="Choose Background Image", command=self.browse_files, bootstyle=PRIMARY).pack(expand=True)
-        
+
+        self.file_path = None
+        self.background_image = ttk.Label(self).pack()
+
 
     def toggle_fullscreen(self, event=None):
         self.state = not self.state  # Toggle boolean
@@ -53,13 +72,19 @@ class MainApp(ttk.Window):
         return
 
 
+    # Open file explorer; code from w3resource
     def browse_files(self):
-        filename = filedialog.askopenfilename(initialdir = "/",
-                                          title = "Select a File",
-                                          filetypes = (("Text files",
-                                                        "*.txt*"),
-                                                       ("all files",
-                                                        "*.*")))
+        self.file_path = filedialog.askopenfilename(title="Open Image File", filetypes=[("Image files", "*.png *.jpg *.jpeg *.gif *.bmp *.ico")])
+        if self.file_path:
+            self.display_image(self.file_path)
+
+
+    # Display the image chose; code from w3resource
+    def display_image(self, file_path):
+        image = Image.open(file_path)
+        photo = ImageTk.PhotoImage(image)
+        self.background_image.config(image=photo)
+        self.background_image.photo = photo
 
 
     def open_sub_window(self):
@@ -68,9 +93,10 @@ class MainApp(ttk.Window):
             self.sub_window = ttk.Toplevel(self) # Keep editor on top level
             self.sub_window.title("Editor")
             self.sub_window.geometry("450x650")
-            self.update_idletasks() # idk what this does
+            self.update_idletasks() # idk what this does tbh
             
             ttk.Label(self.sub_window, text="Editor", padding=20).pack()
+            self.sub_window.browse_files_button = ttk.Button(self.sub_window, text="Choose Background Image", command=self.browse_files, bootstyle=PRIMARY).pack(expand=True)
         else:
             self.sub_window.lift()
 
